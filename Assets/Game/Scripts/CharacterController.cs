@@ -63,6 +63,7 @@ namespace KinematicCharacterController.Examples
         public float JumpPostGroundingGraceTime = 0f;
 
         [Header("Misc")]
+        public PlayerStatManager playerStatManager;
         public List<Collider> IgnoredColliders = new List<Collider>();
         public BonusOrientationMethod BonusOrientationMethod = BonusOrientationMethod.None;
         public float BonusOrientationSharpness = 10f;
@@ -297,6 +298,7 @@ namespace KinematicCharacterController.Examples
                             // Calculate target velocity
                             Vector3 inputRight = Vector3.Cross(_moveInputVector, Motor.CharacterUp);
                             Vector3 reorientedInput = Vector3.Cross(effectiveGroundNormal, inputRight).normalized * _moveInputVector.magnitude;
+                            MaxStableMoveSpeed = playerStatManager.movementSpeed;
                             Vector3 targetMovementVelocity = reorientedInput * MaxStableMoveSpeed;
 
                             // Smooth movement Velocity
@@ -515,10 +517,7 @@ namespace KinematicCharacterController.Examples
 
         public void PickupObject(GameObject objectPrefab)
         {
-            // Instantiate the object prefab and parent it to the player
-            GameObject pickedObject = Instantiate(objectPrefab, transform);
-
-            // Optionally, perform any additional logic specific to the picked object
+            GameObject pickedObject = Instantiate(objectPrefab);
         }
     }
 }

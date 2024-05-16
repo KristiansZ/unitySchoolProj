@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float bulletDamage = 10f;
-
+    public float bulletDamage;
+    public float bleedDamage;
+    public float bleedDuration;
     private void OnTriggerEnter(Collider other)
     {
-        // Check if the bullet collided with an enemy
         if (other.CompareTag("Enemy"))
         {
             Destroy(gameObject);
@@ -16,10 +16,13 @@ public class Bullet : MonoBehaviour
             {
                 enemyController.TakeDamage(bulletDamage);
             }
+             if (bleedDamage > 0 && bleedDuration > 0)
+            {
+                enemyController.StartBleeding(bleedDamage, bleedDuration);
+            }
         }
         else if (!other.CompareTag("Player"))
         {
-            // If the bullet hits anything else (e.g., terrain, obstacles), destroy the bullet
             Destroy(gameObject);
         }
     }

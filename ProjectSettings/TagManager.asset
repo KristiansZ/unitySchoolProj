@@ -6,6 +6,11 @@ TagManager:
   tags:
   - Terrain
   - Enemy
+  - CreamMush
+  - RedMush
+  - BlueMush
+  - PurpleMush
+  - Rifle
   layers:
   - Default
   - TransparentFX

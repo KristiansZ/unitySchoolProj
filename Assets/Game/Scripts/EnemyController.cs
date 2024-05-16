@@ -4,50 +4,163 @@ using UnityEngine.AI;
 
 public class EnemyController : MonoBehaviour
 {
-    public float initialMoveSpeed = 3f;
-    public float initialAttackSpeed = 1f;
-    public float maxHealth = 20f;
+
+    public enum State
+    {
+        None,
+        Chasing,
+        Attacking
+    }
+
+    State _currentState = State.None;
+
+    public State CurrentState
+    {
+        get => _currentState;
+        private set
+        {
+            if (_currentState != value)
+            {
+                _currentState = value;
+                UpdateState();
+            }
+        }
+    }
+    private PlayerStatManager playerStatManager;
+    private EnemyStatManager enemyStatManager;
+    public PlayerLeveling playerLeveling;
+    Animator _animator;
+    Coroutine currentRoutine;
 
     private float moveSpeed;
     private float attackSpeed;
-    public float currentHealth;
+    private float maxHealth;
+    private float damage;
+    private float currentHealth;
+    private bool isBleeding;
+    private float bleedingTimer;
 
     private GameObject player;
     private NavMeshAgent agent;
+    [SerializeField] float attackCloseEnoughDistance = 2f;
     [SerializeField] EnemyHealthBar healthBar;
+
     private void Awake()
     {
         healthBar = GetComponentInChildren<EnemyHealthBar>();
+        enemyStatManager = FindObjectOfType<EnemyStatManager>();
+        playerStatManager = FindObjectOfType<PlayerStatManager>();
+        playerLeveling = FindObjectOfType<PlayerLeveling>();
     }
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
         agent = GetComponent<NavMeshAgent>();
+        _animator = GetComponentInChildren<Animator>();
+
+        if (enemyStatManager != null)
+        {
+            moveSpeed = enemyStatManager.initialMoveSpeed;
+            attackSpeed = enemyStatManager.initialAttackSpeed;
+            maxHealth = enemyStatManager.initialMaxHealth;
+            damage = enemyStatManager.initialDamage;
+
+            agent.speed = moveSpeed;
+        }
 
         currentHealth = maxHealth;
         healthBar.UpdateHealthBar(currentHealth, maxHealth);
-        moveSpeed = initialMoveSpeed;
-        attackSpeed = initialAttackSpeed;
 
-        // Start the coroutine to update the destination
-        StartCoroutine(WalkTowardsPlayer());
+        SetRunning(true);
+        SetAttacking(false);
+
+        CurrentState = State.Chasing;
     }
 
-    IEnumerator WalkTowardsPlayer()
+    void UpdateState()
     {
-        while (true)
+        if (currentRoutine != null) StopCoroutine(currentRoutine);
+
+        SetRunning(CurrentState == State.Chasing);
+        SetAttacking(CurrentState == State.Attacking);
+
+        switch (CurrentState)
+        {
+            case State.Chasing:
+                currentRoutine = StartCoroutine(ChaseRoutine());
+                break;
+            case State.Attacking:
+                currentRoutine = StartCoroutine(AttackRoutine());
+                break;
+        }
+
+        agent.isStopped = CurrentState == State.Attacking;
+    }
+
+    void SetRunning(bool flag)
+    {
+        _animator.SetBool("IsRunning", flag);
+    }
+
+    void SetAttacking(bool flag)
+    {
+        _animator.SetBool("IsAttacking", flag);
+    }
+
+    IEnumerator ChaseRoutine()
+    {
+        while (CurrentState == State.Chasing)
         {
             Vector3 playerPos = player.transform.position;
-            // Set the destination to the player's position
-            if (player != null)
+
+            if (IsCloseEnough(playerPos, attackCloseEnoughDistance))
+            {
+                CurrentState = State.Attacking;
+            }
+            else
             {
                 agent.SetDestination(playerPos);
             }
 
-            // Wait for a short interval before updating again
-            yield return new WaitForSeconds(0.5f);
+
+            yield return null;
         }
+    }
+
+    IEnumerator AttackRoutine()
+    {
+        agent.velocity = Vector3.zero;
+
+        while (CurrentState == State.Attacking)
+        {
+            if (!IsCloseEnough(player.transform.position, attackCloseEnoughDistance))
+            {
+                CurrentState = State.Chasing;
+            }
+             else
+            {
+                float attackTime = 1f / attackSpeed;
+                
+                float animationSpeed = 1f / attackTime;
+                _animator.SetFloat("AttackSpeedMultiplier", animationSpeed);
+
+                float damageDelay = 0.5f * attackTime;
+                yield return new WaitForSeconds(damageDelay);
+
+                playerStatManager.TakeDamage(damage);
+                yield return new WaitForSeconds(damageDelay);
+
+                _animator.SetFloat("AttackSpeedMultiplier", 1f);
+
+                yield return null;
+            }
+        }
+    }
+
+    bool IsCloseEnough(Vector3 destination, float closeEnoughDistance)
+    {
+        return Vector3.Distance(transform.position, destination) < closeEnoughDistance;
     }
 
     public void TakeDamage(float damage)
@@ -61,6 +174,27 @@ public class EnemyController : MonoBehaviour
             Die();
         }
     }
+    public void StartBleeding(float damagePerSecond, float duration)
+    {
+        if (!isBleeding)
+        {
+            isBleeding = true;
+            bleedingTimer = 0f;
+            StartCoroutine(BleedCoroutine(damagePerSecond, duration));
+        }
+    }
+
+    IEnumerator BleedCoroutine(float damagePerSecond, float duration)
+    {
+        while (bleedingTimer < duration)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            TakeDamage(damagePerSecond);
+            bleedingTimer += duration;
+        }
+        isBleeding = false;
+    }
 
     void Die()
     {
@@ -70,12 +204,6 @@ public class EnemyController : MonoBehaviour
             spawnManager.RemoveEnemy(gameObject);
         }
         Destroy(gameObject);
-    }
-
-    public void IncreaseStats(float maxHealthIncrease, float moveSpeedIncrease, float attackSpeedIncrease)
-    {
-        maxHealth += maxHealthIncrease;
-        moveSpeed += moveSpeedIncrease;
-        attackSpeed += attackSpeedIncrease;
+        playerLeveling.EnemyKilled();
     }
 }

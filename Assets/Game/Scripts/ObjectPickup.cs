@@ -1,42 +1,102 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
 
+using KinematicCharacterController.Examples;
 public class ObjectPickup : MonoBehaviour
 {
-    [SerializeField] public GameObject objectToPickup; // Reference to the object to pick up
+    [SerializeField] public GameObject rifle; // Reference to the object to pick up
     public KeyCode pickupKey = KeyCode.E; // Key to press to pick up the object
     [SerializeField] private Transform handTransform;
+    private PlayerStatManager playerStatManager;
+    private Weapon weapon;
+    private KinematicCharacterController.Examples.CharacterController characterController;
+    [SerializeField] public TextMeshProUGUI shroomsText;
+    [SerializeField] public GameObject victoryText;
+    private int shroomsFound = 0;
 
+    private void Start()
+    {
+        playerStatManager = FindObjectOfType<PlayerStatManager>();
+        characterController = FindObjectOfType<KinematicCharacterController.Examples.CharacterController>();
+        weapon = FindObjectOfType<Weapon>();
+    }
    private void Update()
     {
         if (Input.GetKeyDown(pickupKey))
         {
-            Pickup();
-        }
-    }
+            RaycastHit hit;
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            {
+                if (hit.collider.CompareTag("Rifle"))
+                {
+                    if (characterController != null && rifle != null && handTransform != null)
+                    {
+                        Collider rifleCollider = hit.collider;
+                        if (rifleCollider != null)
+                        {
+                            rifleCollider.enabled = false;
+                        }
+                        rifle.transform.SetParent(handTransform);
+                        
+                        rifle.transform.localPosition = new Vector3(0.35f, -0.5f, 0.2f);
+                        rifle.transform.localRotation = Quaternion.identity;
 
-    private void Pickup()
+                        rifle.transform.localEulerAngles = new Vector3(0, 180, 0);
+
+                        rifle.SetActive(true);
+                    }
+                }
+                else if (hit.collider.CompareTag("CreamMush"))
+                {
+                    playerStatManager.IncreaseMovementSpeed(2f);
+                    Destroy(hit.collider.gameObject);
+                    shroomsFound++;
+                }
+                else if (hit.collider.CompareTag("RedMush"))
+                {
+                    playerStatManager.IncreaseHealth(20f);
+                    Destroy(hit.collider.gameObject);
+                    shroomsFound++;
+                }
+                else if (hit.collider.CompareTag("BlueMush"))
+                {
+                    weapon.IncreaseAttackSpeedShrooms(1f);
+                    Destroy(hit.collider.gameObject);
+                    shroomsFound++;
+                }
+                else if (hit.collider.CompareTag("PurpleMush"))
+                {
+                    weapon.IncreaseDamageShrooms(1f);
+                    Destroy(hit.collider.gameObject);
+                    shroomsFound++;
+                }
+            }
+        }
+        UpdateShroomsText();
+    }
+    private void UpdateShroomsText()
     {
-        // Find the custom CharacterController script attached to the player GameObject
-        KinematicCharacterController.Examples.CharacterController characterController = FindObjectOfType<KinematicCharacterController.Examples.CharacterController>();
-        
-        // Ensure the CharacterController script is found
-        if (characterController != null && objectToPickup != null && handTransform != null)
+        if (shroomsText != null)
         {
-            // Parent the object to the player's hand
-            objectToPickup.transform.SetParent(handTransform);
-            
-            // Reset local position and rotation to align correctly with the hand
-            objectToPickup.transform.localPosition = new Vector3(0.35f, -0.5f, 0.2f);
-            objectToPickup.transform.localRotation = Quaternion.identity;
-
-            // Optionally adjust position and rotation if needed
-            objectToPickup.transform.localEulerAngles = new Vector3(0, 180, 0); // Adjust these values based on your model orientation
-
-            // If you don't want to destroy the original object in the scene
-            objectToPickup.SetActive(true); // Hide or disable instead of destroying
+            shroomsText.text = "Shrooms: " + shroomsFound.ToString() + "/20";
+        }
+        if (shroomsFound == 20)
+        {
+            StartCoroutine(ShowVictoryAndLoadScene());
         }
     }
 
+    private IEnumerator ShowVictoryAndLoadScene()
+    {
+        if (victoryText != null)
+        {
+            victoryText.SetActive(true);
+        }
+        yield return new WaitForSeconds(3f);
+
+        SceneManager.LoadScene("WinScreen");
+    }
 }

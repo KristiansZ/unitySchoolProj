@@ -9,9 +9,9 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] public Transform player;
     public float playerExclusionRadius = 10f;
     public float spawnRadius = 20f;
-    public int maxEnemies = 20;
+    public int maxEnemies = 100;
     public int initialEnemies = 8;
-    public int enemiesToSpawn = 5;
+    public int enemiesToSpawn = 6;
     private List<GameObject> spawnedEnemies = new List<GameObject>();
 
     private NavMeshSurface navMeshSurface;
@@ -37,11 +37,35 @@ public class EnemySpawnManager : MonoBehaviour
 
     void Update()
     {
-        if (spawnedEnemies.Count < 6)
+         int enemiesWithinRadius = CountEnemiesWithinRadius(player.position, 30f);
+
+        if (enemiesWithinRadius < 2)
         {
-            // Spawn additional enemies if the current count is less than the maximum allowed
             SpawnAdditionalEnemies(enemiesToSpawn);
         }
+        if (spawnedEnemies.Count < 8)
+        {
+            SpawnAdditionalEnemies(enemiesToSpawn);
+        }
+    }
+    int CountEnemiesWithinRadius(Vector3 center, float radius)
+    {
+        int count = 0;
+        
+        // Iterate through all spawned enemies
+        foreach (GameObject enemy in spawnedEnemies)
+        {
+            // Calculate the distance between the enemy and the center
+            float distance = Vector3.Distance(enemy.transform.position, center);
+
+            // If the distance is less than or equal to the radius, increment the count
+            if (distance <= radius)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     void SpawnAdditionalEnemies(int count)
@@ -64,6 +88,7 @@ public class EnemySpawnManager : MonoBehaviour
         NavMesh.SamplePosition(randomPoint, out hit, spawnRadius, NavMesh.AllAreas);
         return hit.position;
     }
+
     public void RemoveEnemy(GameObject enemy)
     {
         spawnedEnemies.Remove(enemy);
