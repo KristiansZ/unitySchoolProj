@@ -13,6 +13,7 @@ public class ObjectPickup : MonoBehaviour
     private PlayerStatManager playerStatManager;
     private Weapon weapon;
     private KinematicCharacterController.Examples.CharacterController characterController;
+    [SerializeField] public GameObject pickupCanvas;
     [SerializeField] public TextMeshProUGUI shroomsText;
     [SerializeField] public GameObject victoryText;
     private int shroomsFound = 0;
@@ -47,6 +48,7 @@ public class ObjectPickup : MonoBehaviour
                         rifle.transform.localEulerAngles = new Vector3(0, 180, 0);
 
                         rifle.SetActive(true);
+                        pickupCanvas.SetActive(false);
                     }
                 }
                 else if (hit.collider.CompareTag("CreamMush"))

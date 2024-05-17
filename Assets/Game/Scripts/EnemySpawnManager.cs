@@ -7,8 +7,8 @@ public class EnemySpawnManager : MonoBehaviour
 {
     [SerializeField] public GameObject enemyPrefab;
     [SerializeField] public Transform player;
-    public float playerExclusionRadius = 10f;
-    public float spawnRadius = 20f;
+    public float playerExclusionRadius = 20f;
+    public float spawnRadius = 30f;
     public int maxEnemies = 100;
     public int initialEnemies = 8;
     public int enemiesToSpawn = 6;
@@ -37,7 +37,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     void Update()
     {
-         int enemiesWithinRadius = CountEnemiesWithinRadius(player.position, 30f);
+         int enemiesWithinRadius = CountEnemiesWithinRadius(player.position, 32f);
 
         if (enemiesWithinRadius < 2)
         {
@@ -52,13 +52,9 @@ public class EnemySpawnManager : MonoBehaviour
     {
         int count = 0;
         
-        // Iterate through all spawned enemies
         foreach (GameObject enemy in spawnedEnemies)
         {
-            // Calculate the distance between the enemy and the center
             float distance = Vector3.Distance(enemy.transform.position, center);
-
-            // If the distance is less than or equal to the radius, increment the count
             if (distance <= radius)
             {
                 count++;

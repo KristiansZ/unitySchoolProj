@@ -7,7 +7,7 @@ public class EnemyStatManager : MonoBehaviour
     private EnemyController enemyController;
 
     public float initialMaxHealth = 20f;
-    public float initialMoveSpeed = 3f;
+    public float initialMoveSpeed = 5f;
     public float initialAttackSpeed = 10f;
     public float initialDamage = 15f;
 

@@ -18,7 +18,6 @@ public class TimeCounter : MonoBehaviour
             return;
         }
         
-        // Initialize the time counter
         timeElapsed = 0f;
     }
 

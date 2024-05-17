@@ -1,13 +1,16 @@
 using UnityEngine;
+using System.Collections;
 
 public class Weapon : MonoBehaviour
 {
     [SerializeField] public GameObject bulletPrefab;
     [SerializeField] public Transform firePoint;
     [SerializeField] private AudioSource shootingAudioSource;
-    public float blueShroomCount = 0;
+    public float recoilAmount = 0.2f;
+    public float recoilDuration = 0.1f;
     private float nextFireTime = 0f;
     public float purpleShroomCount = 0;
+    public float blueShroomCount = 0;
     public float playerAttackSpeedUpgrades = 0;
     public float bulletDamageUpgrades = 0;
     public float bulletScaleUpgrades = 0;
@@ -18,9 +21,9 @@ public class Weapon : MonoBehaviour
     public float fireRate;
     public float bulletSpeed;
     public int bulletScaleMultiplier = 1;
-    public float criticalStrikeChance = 0f;
+    public float criticalStrikeChance = 0.05f;
     public float criticalStrikeMultiplier = 2f;
-    public float bleedDamage = 0f;
+    public float bleedDamage = 1f;
     public float bleedDuration = 0f;
 
 
@@ -71,6 +74,34 @@ public class Weapon : MonoBehaviour
 
             bulletRigidbody.velocity = bulletDirection * bulletSpeed;
         }
+     StartCoroutine(HandleRecoil());
+    }
+
+    IEnumerator HandleRecoil()
+    {
+        Vector3 originalLocalPosition = transform.localPosition;
+        Vector3 recoilLocalPosition = originalLocalPosition - Vector3.forward * recoilAmount;
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < recoilDuration)
+        {
+            transform.localPosition = Vector3.Lerp(originalLocalPosition, recoilLocalPosition, elapsedTime / recoilDuration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.localPosition = recoilLocalPosition;
+
+        elapsedTime = 0f;
+        while (elapsedTime < recoilDuration)
+        {
+            transform.localPosition = Vector3.Lerp(recoilLocalPosition, originalLocalPosition, elapsedTime / recoilDuration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.localPosition = originalLocalPosition;
     }
     public void IncreaseAttackSpeedShrooms(float amount)
     {

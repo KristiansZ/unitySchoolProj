@@ -174,24 +174,24 @@ public class EnemyController : MonoBehaviour
             Die();
         }
     }
-    public void StartBleeding(float damagePerSecond, float duration)
+    public void StartBleeding(float damage, float duration)
     {
         if (!isBleeding)
         {
             isBleeding = true;
             bleedingTimer = 0f;
-            StartCoroutine(BleedCoroutine(damagePerSecond, duration));
+            StartCoroutine(BleedCoroutine(duration, duration));
         }
     }
 
-    IEnumerator BleedCoroutine(float damagePerSecond, float duration)
+    IEnumerator BleedCoroutine(float damage, float duration)
     {
         while (bleedingTimer < duration)
         {
             yield return new WaitForSeconds(0.5f);
 
-            TakeDamage(damagePerSecond);
-            bleedingTimer += duration;
+            TakeDamage(damage);
+            bleedingTimer += 0.5f;
         }
         isBleeding = false;
     }
